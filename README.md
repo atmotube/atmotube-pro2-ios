@@ -1,6 +1,8 @@
 # Atmotube PRO 2 iOS Sample App
 
-This is a port of the Atmotube PRO 2 Android sample app to iOS using SwiftUI and CoreBluetooth.
+This sample application demonstrates how to interact with Atmotube PRO 2 devices using iOS BLE. It provides a reference implementation for scanning, connecting, reading real-time data, and downloading historical data.
+
+The app is using [Atmotube PRO 2 API](https://support.atmotube.com/en/articles/12714501-atmotube-pro-2-api-documentation) 
 
 ## Requirements
 
