@@ -1,4 +1,4 @@
-# Atmotube PRO 2 iOS App
+# Atmotube PRO 2 iOS Sample App
 
 This is a port of the Atmotube PRO 2 Android sample app to iOS using SwiftUI and CoreBluetooth.
 
