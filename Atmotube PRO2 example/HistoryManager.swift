@@ -8,11 +8,11 @@ class HistoryManager {
         self.transport = transport
     }
     
-    func downloadHistory() async -> URL? {
+    func downloadHistory(fullSync: Bool = false) async -> URL? {
         let fsManager = FileSystemManager(transport: transport)
-        
+
         // 1. Get list of files
-        let fileList = await listFiles()
+        let fileList = await listFiles(fullSync: fullSync)
         if fileList.isEmpty { return nil }
         
         var allMeasurements: [HistoryMeasurement] = []
@@ -39,14 +39,19 @@ class HistoryManager {
         return nil
     }
     
-    private func listFiles() async -> [String] {
+    private func listFiles(fullSync: Bool) async -> [String] {
         let shellCommandManager = ShellCommandManager(transport: transport)
         let output = await shellCommandManager.sendCommand("history get")
-        
+
+        // History files live under /h_new/ and /h_active/; a full sync also
+        // picks up /h_sync/ (older, already-uploaded data).
+        var patterns = ["/h_new/", "/h_active/"]
+        if fullSync { patterns.append("/h_sync/") }
+
         let clean = output.replacingOccurrences(of: "history get ", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         let files = clean.components(separatedBy: ";")
              .map { $0.components(separatedBy: ",")[0] }
-             .filter { !$0.isEmpty && $0.contains("h_active") }
+             .filter { name in !name.isEmpty && patterns.contains { name.contains($0) } }
         return files
     }
     
