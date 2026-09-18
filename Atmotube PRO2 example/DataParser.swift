@@ -110,10 +110,10 @@ struct AtmotubeReading {
 
     // PM characteristic (BDA3C093) is 16 bytes:
     // 0-1 PM1, 2-3 PM2.5, 4-5 PM10, 6-7 #PM0.5, 8-9 #PM1, 10-11 #PM2.5, 12-13 #PM10,
-    // 14-15 typical particle size (raw, no scaling)
-    static func parsePm(data: Data) -> (pm1: Double, pm25: Double, pm10: Double, pm05Particles: Int, pm1Particles: Int, pm25Particles: Int, pm10Particles: Int, typicalParticleSize: Int) {
+    // 14-15 typical particle size (µm * 10)
+    static func parsePm(data: Data) -> (pm1: Double, pm25: Double, pm10: Double, pm05Particles: Int, pm1Particles: Int, pm25Particles: Int, pm10Particles: Int, typicalParticleSize: Double) {
         let bytes = [UInt8](data)
-        if bytes.count < 6 { return (0.0, 0.0, 0.0, 0, 0, 0, 0, 0) }
+        if bytes.count < 6 { return (0.0, 0.0, 0.0, 0, 0, 0, 0, 0.0) }
 
         func readUShort(offset: Int) -> Int {
             return (Int(bytes[offset + 1]) & 0xFF) << 8 | (Int(bytes[offset]) & 0xFF)
@@ -124,7 +124,7 @@ struct AtmotubeReading {
         let pm10 = decodePmValue(raw: readUShort(offset: 4))
 
         guard bytes.count >= 16 else {
-            return (pm1, pm25, pm10, 0, 0, 0, 0, 0)
+            return (pm1, pm25, pm10, 0, 0, 0, 0, 0.0)
         }
 
         return (
@@ -133,7 +133,7 @@ struct AtmotubeReading {
             pm1Particles: readUShort(offset: 8),
             pm25Particles: readUShort(offset: 10),
             pm10Particles: readUShort(offset: 12),
-            typicalParticleSize: readUShort(offset: 14)
+            typicalParticleSize: Double(readUShort(offset: 14)) / 10.0
         )
     }
 }
@@ -294,7 +294,7 @@ class HistoryParser {
                 pm25Particles = reader.readLeU16()
                 pm10Particles = reader.readLeU16()
                 if let tpsRaw = reader.readLeU16() {
-                    typicalParticleSize = Double(tpsRaw)
+                    typicalParticleSize = Double(tpsRaw) / 10.0
                 }
             }
             

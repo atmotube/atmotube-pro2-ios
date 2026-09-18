@@ -12,7 +12,7 @@ class BleManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
 
     @Published var connectionState: ConnectionState = .disconnected
     @Published var latestReading: AtmotubeReading?
-    @Published var pmReading: (pm1: Double, pm25: Double, pm10: Double, pm05Particles: Int, pm1Particles: Int, pm25Particles: Int, pm10Particles: Int, typicalParticleSize: Int)?
+    @Published var pmReading: (pm1: Double, pm25: Double, pm10: Double, pm05Particles: Int, pm1Particles: Int, pm25Particles: Int, pm10Particles: Int, typicalParticleSize: Double)?
     @Published var gpsReading: AtmotubeGpsReading?
     @Published var commandLogs: [String] = []
     @Published var discoveredDevices: [CBPeripheral] = []
