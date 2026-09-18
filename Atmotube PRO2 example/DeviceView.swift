@@ -40,7 +40,8 @@ struct DeviceView: View {
                         let pm10 = AtmotubeReading.formatSensorValue(pm.pm10 as NSNumber)
                         SensorCard(title: "PM 10", value: pm10 + (Double(pm10) != nil ? " µg/m³" : ""))
 
-                        SensorCard(title: "Typical particle size", value: String(format: "%.1f µm", pm.typicalParticleSize))
+                        let typicalSize = AtmotubeReading.formatSensorValue(pm.typicalParticleSize as NSNumber)
+                        SensorCard(title: "Typical particle size", value: typicalSize + (Double(typicalSize) != nil ? " µm" : ""))
                     }
 
                     if let gps = bleManager.gpsReading, let lat = gps.latitude, let lon = gps.longitude {
