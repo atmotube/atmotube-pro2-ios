@@ -8,17 +8,20 @@ class BleManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
     static let ATMOTUBE_DATA_SERVICE_UUID = CBUUID(string: "BDA3C091-E5E0-4DAC-8170-7FCEF187A1D0")
     static let ATMOTUBE_DATA_CHAR_UUID = CBUUID(string: "BDA3C092-E5E0-4DAC-8170-7FCEF187A1D0")
     static let ATMOTUBE_PM_CHAR_UUID = CBUUID(string: "BDA3C093-E5E0-4DAC-8170-7FCEF187A1D0")
-    
+    static let ATMOTUBE_GPS_CHAR_UUID = CBUUID(string: "BDA3C094-E5E0-4DAC-8170-7FCEF187A1D0")
+
     @Published var connectionState: ConnectionState = .disconnected
     @Published var latestReading: AtmotubeReading?
-    @Published var pmReading: (Double, Double, Double)?
+    @Published var pmReading: (pm1: Double, pm25: Double, pm10: Double, pm05Particles: Int, pm1Particles: Int, pm25Particles: Int, pm10Particles: Int, typicalParticleSize: Double)?
+    @Published var gpsReading: AtmotubeGpsReading?
     @Published var commandLogs: [String] = []
     @Published var discoveredDevices: [CBPeripheral] = []
-    
+
     private var centralManager: CBCentralManager!
     private var peripheral: CBPeripheral?
     private var dataCharacteristic: CBCharacteristic?
     private var pmCharacteristic: CBCharacteristic?
+    private var gpsCharacteristic: CBCharacteristic?
     
     var transport: McuMgrBleTransport?
     
@@ -99,11 +102,11 @@ class BleManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
         guard let services = peripheral.services else { return }
         for service in services {
             if service.uuid == BleManager.ATMOTUBE_DATA_SERVICE_UUID {
-                peripheral.discoverCharacteristics([BleManager.ATMOTUBE_DATA_CHAR_UUID, BleManager.ATMOTUBE_PM_CHAR_UUID], for: service)
+                peripheral.discoverCharacteristics([BleManager.ATMOTUBE_DATA_CHAR_UUID, BleManager.ATMOTUBE_PM_CHAR_UUID, BleManager.ATMOTUBE_GPS_CHAR_UUID], for: service)
             }
         }
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard let characteristics = service.characteristics else { return }
         for characteristic in characteristics {
@@ -113,14 +116,17 @@ class BleManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
             } else if characteristic.uuid == BleManager.ATMOTUBE_PM_CHAR_UUID {
                 pmCharacteristic = characteristic
                 peripheral.setNotifyValue(true, for: characteristic)
+            } else if characteristic.uuid == BleManager.ATMOTUBE_GPS_CHAR_UUID {
+                gpsCharacteristic = characteristic
+                peripheral.setNotifyValue(true, for: characteristic)
             }
         }
         connectionState = .ready
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard let data = characteristic.value else { return }
-        
+
         if characteristic.uuid == BleManager.ATMOTUBE_DATA_CHAR_UUID {
             let reading = AtmotubeReading.fromBytes(data: data, deviceMac: peripheral.identifier.uuidString)
             DispatchQueue.main.async {
@@ -130,6 +136,11 @@ class BleManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeriph
             let pm = AtmotubeReading.parsePm(data: data)
             DispatchQueue.main.async {
                 self.pmReading = pm
+            }
+        } else if characteristic.uuid == BleManager.ATMOTUBE_GPS_CHAR_UUID {
+            let gps = AtmotubeGpsReading.fromBytes(data: data)
+            DispatchQueue.main.async {
+                self.gpsReading = gps
             }
         }
     }

@@ -22,19 +22,33 @@ struct DeviceView: View {
                     
                     let press = AtmotubeReading.formatSensorValue(reading.pressure as NSNumber, type: "press")
                     SensorCard(title: "Pressure", value: press + (Double(press) != nil ? " hPa" : ""))
-                    
+
                     let co2 = AtmotubeReading.formatSensorValue(reading.co2Ppm as NSNumber)
                     SensorCard(title: "CO2", value: co2 + (Double(co2) != nil ? " ppm" : ""))
 
+                    if reading.isCharging {
+                        SensorCard(title: "Charging", value: reading.isRecentlyCharged ? "Recently charged" : "Yes")
+                    }
+
                     if let pm = bleManager.pmReading {
-                        let pm1 = AtmotubeReading.formatSensorValue(pm.0 as NSNumber)
+                        let pm1 = AtmotubeReading.formatSensorValue(pm.pm1 as NSNumber)
                         SensorCard(title: "PM 1.0", value: pm1 + (Double(pm1) != nil ? " µg/m³" : ""))
-                        
-                        let pm25 = AtmotubeReading.formatSensorValue(pm.1 as NSNumber)
+
+                        let pm25 = AtmotubeReading.formatSensorValue(pm.pm25 as NSNumber)
                         SensorCard(title: "PM 2.5", value: pm25 + (Double(pm25) != nil ? " µg/m³" : ""))
-                        
-                        let pm10 = AtmotubeReading.formatSensorValue(pm.2 as NSNumber)
+
+                        let pm10 = AtmotubeReading.formatSensorValue(pm.pm10 as NSNumber)
                         SensorCard(title: "PM 10", value: pm10 + (Double(pm10) != nil ? " µg/m³" : ""))
+
+                        let typicalSize = AtmotubeReading.formatSensorValue(pm.typicalParticleSize as NSNumber)
+                        SensorCard(title: "Typical particle size", value: typicalSize + (Double(typicalSize) != nil ? " µm" : ""))
+                    }
+
+                    if let gps = bleManager.gpsReading, let lat = gps.latitude, let lon = gps.longitude {
+                        SensorCard(title: "Location", value: String(format: "%.5f, %.5f", lat, lon))
+                        if let sats = gps.satellitesFixed {
+                            SensorCard(title: "Satellites fixed", value: "\(sats)")
+                        }
                     }
                 } else {
                     Text("Waiting for data...")
